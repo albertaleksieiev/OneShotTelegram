@@ -6,3 +6,4 @@ build/
 *.aar
 *.war
 !gradle-wrapper.jar
+.idea/*

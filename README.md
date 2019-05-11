@@ -2,7 +2,7 @@
 
 TelegramBot SDK with Android-like UI view architecture
 
-![](https://api.monosnap.com/rpc/file/download?id=uYkMOixngDnPz1DLwQExgDD5boIY5I&type=attachment)
+![](https://api.monosnap.com/rpc/file/download?id=g1mM6h5M0Oe9eyzypNfEYpYewKhAbg&type=attachment)
 
 ### Create a view
 To create a view aka page, you just need to extends from `BotView` class
@@ -57,7 +57,7 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 dependencies {
-     compile 'com.github.albertaleksieiev:OneShotTelegram:-SNAPSHOT'
+     compile 'com.github.albertaleksieiev:OneShotTelegram:master-SNAPSHOT'
 }
 ```  
 
