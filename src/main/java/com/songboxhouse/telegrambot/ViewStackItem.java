@@ -4,11 +4,10 @@ import com.songboxhouse.telegrambot.util.Storage;
 
 public class ViewStackItem {
     private BotView view;
-    private Storage data;
 
     public ViewStackItem(BotView view, Storage data) {
         this.view = view;
-        this.data = data;
+        this.view.setData(data);
     }
 
     public BotView getView() {
@@ -19,15 +18,7 @@ public class ViewStackItem {
         this.view = view;
     }
 
-    public Storage getData() {
-        return data;
-    }
-
-    public void setData(Storage data) {
-        this.data = data;
-    }
-
     String draw() {
-        return getView().draw(getData());
+        return getView().draw(view.getData());
     }
 }

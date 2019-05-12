@@ -1,7 +1,8 @@
 package com.songboxhouse.telegrambot.example;
 
+import com.songboxhouse.telegrambot.anotations.DependencyProvider;
+import com.songboxhouse.telegrambot.anotations.InstanceProvider;
 import com.songboxhouse.telegrambot.BotCenter;
-import com.songboxhouse.telegrambot.DependecyProvider;
 
 public class Main {
     private static final String BOT_TOKEN = null; // Retrieve it from here https://telegram.me/BotFather
@@ -15,10 +16,9 @@ public class Main {
             throw new IllegalArgumentException();
         }
 
-        BotCenter botCenter = new BotCenter(BOT_NAME,
-                BOT_TOKEN,
-                new MyDependencyProvider(db),
-                HomeView.class /*Initial View*/);
+        BotCenter botCenter = new BotCenter.Builder(BOT_NAME, BOT_TOKEN, HomeView.class /*Initial View*/)
+                .setDependecyProvider(new MyDependencyProvider(db))
+                .build();
         botCenter.start();
 
         while (true) {
@@ -31,14 +31,16 @@ public class Main {
     }
 
 
-    public static class MyDependencyProvider extends DependecyProvider {
+    @DependencyProvider
+    public static class MyDependencyProvider {
         DBInMemory dbInMemory;
 
         public MyDependencyProvider(DBInMemory dbInMemory) {
             this.dbInMemory = dbInMemory;
         }
 
-        public DBInMemory provideDBInMemory() {
+        @InstanceProvider
+        public DBInMemory providesDBInMemory() {
             return dbInMemory;
         }
     }

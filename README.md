@@ -32,10 +32,7 @@ private static final String BOT_TOKEN = ; // Retrieve it from here https://teleg
 private static final String BOT_NAME = "OneShot bot";
 
 public static void main(String[] args) {
-    BotCenter botCenter = new BotCenter(BOT_NAME,
-            BOT_TOKEN,
-            null,
-            HomeView.class /*Initial View*/);
+    BotCenter botCenter = new BotCenter.Builder(BOT_NAME, BOT_TOKEN, HomeView.class /*Initial View*/).build();
     botCenter.start();
 
     while (true) {
@@ -142,7 +139,7 @@ public class SettingsView extends BotView {
 }
 ```
 
-##### 2. To retrieve data and display it use `data` argument from `draw` function
+##### 2. To retrieve data and display it use `data` argument from `draw` function or method `getData()`
 
 ```
 public class HomeView extends BotView {
@@ -162,20 +159,21 @@ public class HomeView extends BotView {
 ```
 
 ### Inject arguments into BotView constructor
-`OneShotTelegramBot` take care of object initialization by self, so you need to use simple Dependency Injection by providing `DependecyProvider` instance
+`OneShotTelegramBot` take care of object initialization by self, so you need to use simple Dependency Injection by providing DependecyProvider instance. To do this create a class with `@DependencyProvider` anotation and  public method with `@InstanceProvider` which provides instance.
 
 ##### 1. Providing `DependecyProvider`
 
 ```
-public static class MyDependencyProvider extends DependecyProvider {
+@DependencyProvider
+public static class MyDependencyProvider {
     DBInMemory dbInMemory;
 
     public MyDependencyProvider(DBInMemory dbInMemory) {
         this.dbInMemory = dbInMemory;
     }
 
-	 // Provide function must be public and returns provided data type
-    public DBInMemory provideDBInMemory() {
+    @InstanceProvider
+    public DBInMemory providesDBInMemory() {
         return dbInMemory;
     }
 }
@@ -200,10 +198,12 @@ public static class DBInMemory {
 ...
 private static DBInMemory db = new DBInMemory();
      
-BotCenter botCenter = new BotCenter(BOT_NAME,
+BotCenter botCenter = new BotCenter.Builder(BOT_NAME,
              BOT_TOKEN,
              new MyDependencyProvider(db),
-             HomeView.class /*Initial View*/);
+             HomeView.class /*Initial View*/)
+             	.setDependecyProvider(new MyDependencyProvider(db))
+             	.build();
 ```
 
 ##### 3. Add argument to view constructor
@@ -271,3 +271,8 @@ public class HomeView extends BotView {
 ```
 
 ![](https://api.monosnap.com/rpc/file/download?id=yQ5VyVEfIhcoMPHRk1jI88tR6ZkLbi&type=attachment)
+
+### Persistence `BotView` instance
+By default your view and data will be saved to disk in case of restore state, restoring used in case of clicking on the button on old messages. So data needs to be serializable, but you can override `onSaveInstanceState` and `onRestoreInstanceState`.
+
+You can disable saving view to disk by `BotCenter.Builder::setInstanceSavingEnabled(false)`. 

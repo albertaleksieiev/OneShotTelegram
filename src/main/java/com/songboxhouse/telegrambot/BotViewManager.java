@@ -1,5 +1,6 @@
 package com.songboxhouse.telegrambot;
 
+import com.songboxhouse.telegrambot.anotations.InstanceProvider;
 import com.songboxhouse.telegrambot.context.BotContext;
 
 import java.lang.reflect.Constructor;
@@ -9,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BotViewManager {
-    private DependecyProvider dependecyProvider;
+    private Object dependecyProvider;
 
-    BotViewManager(DependecyProvider dependecyProvider) {
+    BotViewManager(Object dependecyProvider) {
         this.dependecyProvider = dependecyProvider;
     }
 
@@ -49,7 +50,13 @@ public class BotViewManager {
             System.out.println("Dependency provide is null, skip creating an object");
             return null;
         }
-        Class<? extends DependecyProvider> dependecyProviderClass = dependecyProvider.getClass();
+
+        if (clazz.isAnnotationPresent(InstanceProvider.class)) {
+            System.out.println("Your object probably not anotated with @InstanceProvider`");
+            return null;
+        }
+
+        Class dependecyProviderClass = dependecyProvider.getClass();
 
         Method[] methods = dependecyProviderClass.getMethods();
         for (Method method: methods) {
