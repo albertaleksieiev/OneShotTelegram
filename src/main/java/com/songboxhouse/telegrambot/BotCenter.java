@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.songboxhouse.telegrambot.util.ExecutorUtil.createExecutorService;
@@ -52,6 +53,8 @@ public class BotCenter {
         this.botViewManager = new BotViewManager(builder.dependecyProvider);
         this.telegramMethodManager = builder.telegramMethodManager;
         this.botViewsStorage = new BotViewsStorage(botViewManager);
+
+        botViewsStorage.setInstanceSavingEnabled(builder.instanceSavedEnabled);
     }
 
     public void start() {
@@ -147,15 +150,23 @@ public class BotCenter {
 
         // Default inline buttons
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();  // TODO split
-        List<InlineKeyboardButton> defaultButtons = Arrays.stream(links)
-                .map(it -> new InlineKeyboardButton(botViewManager.getView(view.getContext(), it).name())
-                        .setCallbackData(it.getSimpleName()))
-                .collect(Collectors.toList());
 
-        listsOfInlineButtons.add(defaultButtons);
+        List<InlineKeyboardButton> currentSetOfButtons = new ArrayList<>();
+        for (Class linkClass : links) {
+            currentSetOfButtons.add(new InlineKeyboardButton(botViewManager.getView(view.getContext(), linkClass).name())
+                    .setCallbackData(linkClass.getSimpleName()));
+            if (currentSetOfButtons.size() >= 2) {
+                listsOfInlineButtons.add(currentSetOfButtons);
+                currentSetOfButtons = new ArrayList<>();
+            }
+        }
+
+        if (currentSetOfButtons.size() > 0) {
+            listsOfInlineButtons.add(currentSetOfButtons);
+        }
 
         if (!view.getClass().equals(initialViewClass)) {
-            defaultButtons.add(backButton(message.isSendAsNew()));
+            listsOfInlineButtons.add(Collections.singletonList(backButton(message.isSendAsNew())));
         }
 
         inlineKeyboardMarkup.setKeyboard(listsOfInlineButtons);
