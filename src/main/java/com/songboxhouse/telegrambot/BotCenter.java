@@ -224,6 +224,7 @@ public class BotCenter {
         }
 
         private void draw(ViewStackItem viewStackItem, Update update, boolean sendAsNewMessage) {
+            viewStackItem.getView().getData().put(Storage.KEY_TELEGRAM_UPDATE, update);
             viewStackItem.getView().onCreate(viewStackItem.getView().getData());
 
             BotMessage botMessage = new BotMessage(viewStackItem.draw(), sendAsNewMessage);

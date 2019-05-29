@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Storage {
+    public static final String KEY_TELEGRAM_UPDATE = "KEY_TELEGRAM_UPDATE";
     private Map<String, Object> map = new ConcurrentHashMap<>();
 
     public <T> T get(String name, Class<T> type) {
