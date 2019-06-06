@@ -1,9 +1,11 @@
 package com.songboxhouse.telegrambot.example;
 
-import com.songboxhouse.telegrambot.BotMessage;
+import com.songboxhouse.telegrambot.util.TelegramBotUtils;
+import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.context.BotContext;
 import com.songboxhouse.telegrambot.util.Storage;
-import com.songboxhouse.telegrambot.BotView;
+import com.songboxhouse.telegrambot.view.BotView;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -32,11 +34,15 @@ public class HomeView extends BotView {
         super.onStart();
 
         String userName = getContext().getSessionStorage().get(STORAGE_KEY_USERNAME, String.class);
+        if (userName == null) {
+            userName = getData().get(STORAGE_KEY_USERNAME, String.class);
+        }
         Boolean justConfigured = getData().get(ARG_JUST_CONFIGURED, Boolean.class);
 
         String token = db.getUserToken();
 
         String message = "🖲 View: " + this.getClass().getSimpleName() + ".java\n" +
+                "🎃" + getUuid() + "\n" +
                 "Welcome Home " +
                 (userName == null ? "" : userName)
                 + "🏠"
@@ -53,11 +59,17 @@ public class HomeView extends BotView {
     }
 
     @Override
+    public void onTextReceived(Message message) {
+        super.onTextReceived(message);
+        navigate(HomeView.class, true);
+    }
+
+    @Override
     public void onCallbackQueryDataReceived(Update update, String data) {
         super.onCallbackQueryDataReceived(update, data);
         if (data.equals(BUTTON_KEY_RUN_SUPER_CONFIG)) {
             Storage storage = new Storage();
-            storage.put(SuperConfigureViewWithInlineButtons.ARG_NAME, UUID.randomUUID().toString().substring(0, 6));
+            storage.put(SuperConfigureViewWithInlineButtons.ARG_NAME, TelegramBotUtils.generateUUID());
             navigate(SuperConfigureViewWithInlineButtons.class, storage);
         }
     }
@@ -69,6 +81,12 @@ public class HomeView extends BotView {
 
     @Override
     public <BT extends BotView> Class<BT>[] menuLinkStates() {
-        return new Class[]{SettingsView.class, ConfigureTokenView.class};
+        return new Class[]{SettingsView.class, ConfigureTokenView.class, ConfigureTokenView.class};
+    }
+
+    @Override
+    public void onSaveInstanceState(Storage data) {
+        super.onSaveInstanceState(data);
+        data.put(STORAGE_KEY_USERNAME, getContext().getSessionStorage().get(STORAGE_KEY_USERNAME, String.class));
     }
 }

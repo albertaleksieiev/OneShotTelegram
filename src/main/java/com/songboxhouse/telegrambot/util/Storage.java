@@ -4,8 +4,11 @@ import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Storage {
+public class Storage implements Serializable {
     public static final String KEY_TELEGRAM_UPDATE = "KEY_TELEGRAM_UPDATE";
+
+    private static final long serialVersionUID = 1L;
+
     private Map<String, Object> map = new ConcurrentHashMap<>();
 
     public <T> T get(String name, Class<T> type) {
@@ -13,6 +16,10 @@ public class Storage {
     }
 
     public <T> Storage put(String name, T value) {
+        if (value == null) {
+            System.out.println("DATA is null, skip put in storage");
+            return this;
+        }
         map.put(name, value);
         return this;
     }
@@ -22,19 +29,5 @@ public class Storage {
         if (storage != null) {
             this.map.putAll(storage.map);
         }
-    }
-
-    public void saveIntoFile(File file) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file);
-        ObjectOutputStream oos = new ObjectOutputStream(fos);
-        oos.writeObject(map);
-        oos.close();
-        fos.close();
-    }
-
-    public void loadFromFile(File file) throws IOException, ClassNotFoundException {
-        FileInputStream fis = new FileInputStream(file);
-        ObjectInputStream ois = new ObjectInputStream(fis);
-        this.map = (Map<String, Object>) ois.readObject();
     }
 }

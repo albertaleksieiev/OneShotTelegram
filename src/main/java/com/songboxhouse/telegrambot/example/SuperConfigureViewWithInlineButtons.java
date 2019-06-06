@@ -1,7 +1,7 @@
 package com.songboxhouse.telegrambot.example;
 
-import com.songboxhouse.telegrambot.BotMessage;
-import com.songboxhouse.telegrambot.BotView;
+import com.songboxhouse.telegrambot.view.BotMessage;
+import com.songboxhouse.telegrambot.view.BotView;
 import com.songboxhouse.telegrambot.context.BotContext;
 import com.songboxhouse.telegrambot.util.Storage;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -56,9 +56,9 @@ public class SuperConfigureViewWithInlineButtons extends BotView {
         super.onCallbackQueryDataReceived(update, data);
 
         if (data.equals(BUTTON_OK)) {
-            sendMessage("OK clicked for view " + describeView());
+            sendMessage("OK clicked for view " + describeView(), false);
         } else if (data.equals(BUTTON_CANCEL)) {
-            sendMessage("Cancel clicked for view " + describeView());
+            sendMessage("Cancel clicked for view " + describeView(), false);
         }
     }
 
