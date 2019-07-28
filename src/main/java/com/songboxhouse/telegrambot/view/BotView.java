@@ -21,6 +21,7 @@ public abstract class BotView {
 
     private boolean isDrawed = false;
     private boolean isCreated = false;
+    protected boolean isDestroyed = false;
 
     public BotView(BotContext context) {
         this.context = context;
@@ -35,6 +36,9 @@ public abstract class BotView {
     public <BT extends BotView> Class<BT>[] menuLinkStates() {
         return null;
     }
+    public boolean menuLinksAsNewMessage() {
+        return false;
+    }
 
     public abstract String name();
 
@@ -44,12 +48,12 @@ public abstract class BotView {
 
     // This method will be called right after draw is finished
     public void onStart() {
-
+        isDestroyed = false;
     }
 
     // This method will be called right view is stoped
     public void onStop() {
-
+        isDestroyed = true;
     }
 
     public void onCallbackQueryDataReceived(Update update, String data) {

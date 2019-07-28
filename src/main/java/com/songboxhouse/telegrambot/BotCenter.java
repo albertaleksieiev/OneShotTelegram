@@ -123,7 +123,7 @@ public class BotCenter {
                 if (view.menuLinkStates() != null) {
                     for (Class classView : view.menuLinkStates()) {
                         if (classView.getSimpleName().equals(uuidWithData.data)) {
-                            botCenterToContextBridge.navigate(view, classView, null, update, false);
+                            botCenterToContextBridge.navigate(view, classView, null, update, view.menuLinksAsNewMessage());
                             return;
                         }
                     }
