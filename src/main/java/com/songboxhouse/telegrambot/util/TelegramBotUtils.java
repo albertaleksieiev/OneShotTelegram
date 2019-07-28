@@ -48,11 +48,11 @@ public class TelegramBotUtils {
     public static InlineKeyboardButton backButton(BotView view, boolean sendAsNew) {
         if (sendAsNew) {
             return new InlineKeyboardButton("🔙")
-                    .setCallbackData(createCallbackData(view, STATE_GO_BACK));
+                    .setCallbackData(createCallbackData(view, STATE_GO_BACK_AS_NEW_MESSAGE));
 
         } else {
             return new InlineKeyboardButton("🔙")
-                    .setCallbackData(createCallbackData(view, STATE_GO_BACK_AS_NEW_MESSAGE));
+                    .setCallbackData(createCallbackData(view, STATE_GO_BACK));
         }
     }
 

@@ -85,7 +85,7 @@ public abstract class BotView {
     }
 
     protected <BT extends BotView> void navigate(Class<BT> view, Storage data) {
-        navigate(view, data,false);
+        navigate(view, data, false);
     }
 
     protected <BT extends BotView> void navigate(Class<BT> view, boolean asNewMessage) {
@@ -185,5 +185,14 @@ public abstract class BotView {
 
         onCreate(getData());
         onRestoreInstanceState(getData());
+    }
+
+    public BotView clone(BotViewManager botViewManager,
+                         BotCenter.BotCenterToContextBridge bridge,
+                         Update update) {
+        BotView botView = botViewManager.buildView(bridge.buildContext(update), this.getClass());
+        botView.setParentViewId(this.getParentViewId());
+        botView.data = this.data.clone();
+        return botView;
     }
 }

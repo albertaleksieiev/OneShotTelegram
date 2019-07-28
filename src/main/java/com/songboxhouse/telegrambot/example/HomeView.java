@@ -68,9 +68,10 @@ public class HomeView extends BotView {
     public void onCallbackQueryDataReceived(Update update, String data) {
         super.onCallbackQueryDataReceived(update, data);
         if (data.equals(BUTTON_KEY_RUN_SUPER_CONFIG)) {
-            Storage storage = new Storage();
-            storage.put(SuperConfigureViewWithInlineButtons.ARG_NAME, TelegramBotUtils.generateUUID());
-            navigate(SuperConfigureViewWithInlineButtons.class, storage);
+            Storage storage = new Storage()
+                    .put(SuperConfigureViewWithInlineButtons.ARG_NESTED_LEVEL, 1);
+
+            navigate(SuperConfigureViewWithInlineButtons.class, storage, true);
         }
     }
 

@@ -9,6 +9,13 @@ public class Storage implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public Storage() {
+    }
+
+    public Storage(Storage storage) {
+        copyFrom(storage);
+    }
+
     private Map<String, Object> map = new ConcurrentHashMap<>();
 
     public <T> T get(String name, Class<T> type) {
@@ -24,10 +31,15 @@ public class Storage implements Serializable {
         return this;
     }
 
-    public void copyFrom(Storage storage) {
+    public Storage copyFrom(Storage storage) {
         this.map.clear();
         if (storage != null) {
             this.map.putAll(storage.map);
         }
+        return this;
+    }
+
+    public Storage clone() {
+        return new Storage(this);
     }
 }

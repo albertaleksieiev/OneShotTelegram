@@ -5,7 +5,7 @@ import com.songboxhouse.telegrambot.anotations.InstanceProvider;
 import com.songboxhouse.telegrambot.BotCenter;
 
 public class Main {
-    private static final String BOT_TOKEN = null; // Retrieve it from here https://telegram.me/BotFather
+    private static final String BOT_TOKEN = "803965316:AAEBx-TRlNA-eJkEzbedcjtqdSlBCIdYHKk"; // Retrieve it from here https://telegram.me/BotFather
     private static final String BOT_NAME = "OneShot bot";
 
     private static DBInMemory db = new DBInMemory();

@@ -36,14 +36,15 @@ import static com.songboxhouse.telegrambot.util.TelegramBotUtils.getUid;
 
 
 public class BotCenter {
-    public static final String STATE_GO_BACK = "SGB_N_&^#";
-    public static final String STATE_GO_BACK_AS_NEW_MESSAGE = "SGB_&_^#";
+    public static final String STATE_GO_BACK = "SGB_&^#";
+    public static final String STATE_GO_BACK_AS_NEW_MESSAGE = "SGBN_&_^#";
 
     private final BotViewManager botViewManager;
     private final Object telegramMethodManager;
+    private final int buttonsInRow;
     private Class<? extends BotView> initialViewClass;
     private final TelegramLongPollingBot telegramLongPollingBot;
-    private BotCenterToContextBridge botCenterToContextBridge = new BotCenterToContextBridge();
+    private final BotCenterToContextBridge botCenterToContextBridge;
 
     private Map<Integer, SessionStorage> userToSessionStorage = new ConcurrentHashMap<>();
     private Map<Integer, Object> userToLock = new ConcurrentHashMap<>();
@@ -56,6 +57,9 @@ public class BotCenter {
         this.botViewManager = new BotViewManager(builder.dependecyProvider);
         this.telegramMethodManager = builder.telegramMethodManager;
         this.botViewsStorage = new BotViewsStorage(botViewManager);
+        this.buttonsInRow = builder.buttonsInRow;
+
+        botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize);
 
         botViewsStorage.setInstanceSavingEnabled(builder.instanceSavedEnabled);
     }
@@ -167,7 +171,7 @@ public class BotCenter {
         for (Class linkClass : links) {
             currentSetOfButtons.add(new InlineKeyboardButton(botViewManager.buildView(view.getContext(), linkClass).name())
                     .setCallbackData(view.getUuid() + linkClass.getSimpleName()));
-            if (currentSetOfButtons.size() >= 2) {
+            if (currentSetOfButtons.size() >= buttonsInRow) {
                 listsOfInlineButtons.add(currentSetOfButtons);
                 currentSetOfButtons = new ArrayList<>();
             }
@@ -178,7 +182,7 @@ public class BotCenter {
         }
 
         if (!view.getClass().equals(initialViewClass)) {
-            listsOfInlineButtons.add(Collections.singletonList(backButton(view, message.isSendAsNew())));
+            listsOfInlineButtons.add(Collections.singletonList(backButton(view, false)));
         }
 
         inlineKeyboardMarkup.setKeyboard(listsOfInlineButtons);
@@ -216,7 +220,7 @@ public class BotCenter {
             try {
                 Message sentMessage = telegramLongPollingBot.execute(sendMessage);
                 view.setTelegramMessageId(sentMessage.getMessageId());
-                botViewsStorage.saveBotViewInstance(view, uid);
+                // botViewsStorage.saveBotViewInstance(view, uid);
                 return true;
             } catch (TelegramApiException e) {
                 e.printStackTrace();
@@ -229,8 +233,8 @@ public class BotCenter {
     public class BotCenterToContextBridge {
         private ExecutorService executorService;
 
-        BotCenterToContextBridge() {
-            this.executorService = createExecutorService(16);
+        BotCenterToContextBridge(int executorServiceThreadSize) {
+            this.executorService = createExecutorService(executorServiceThreadSize);
         }
 
         private void draw(BotView botView, Update update, boolean sendAsNewMessage) {
@@ -295,9 +299,13 @@ public class BotCenter {
                 }
                 target.onStop();
                 // TODO REMOVE FROM STORAGE
+                parent = parent.clone(botViewManager, botCenterToContextBridge, update);
+                parent.setTelegramMessageId(target.getTelegramMessageId());
 
                 draw(parent, update, sendAsNewMessage);
-                botViewsStorage.setRootBotView(update, parent);
+                if (sendAsNewMessage) {
+                    botViewsStorage.setRootBotView(update, parent);
+                }
             }
         }
 
@@ -309,7 +317,7 @@ public class BotCenter {
             return executorService;
         }
 
-        private UserBotContext buildContext(Update update) {
+        public UserBotContext buildContext(Update update) {
             return new UserBotContext(update, this);
         }
     }
@@ -321,6 +329,8 @@ public class BotCenter {
         private final Class initialViewClass;
         private Object telegramMethodManager;
         private boolean instanceSavedEnabled = true;
+        private int buttonsInRow = 2;
+        private int executorServiceThreadSize = 16;
 
         public <BV extends BotView> Builder(String telegramBotName, String telegramBotToken, Class<BV> initialViewClass) {
             this.telegramBotName = telegramBotName;
@@ -340,6 +350,16 @@ public class BotCenter {
 
         public Builder setInstanceSavingEnabled(boolean enabled) {
             instanceSavedEnabled = enabled;
+            return this;
+        }
+
+        public Builder setButtonsInRow(int buttonsInRow) {
+            this.buttonsInRow = buttonsInRow;
+            return this;
+        }
+
+        public Builder setExecutorServiceThreadSize(int executorServiceThreadSize) {
+            this.executorServiceThreadSize = executorServiceThreadSize;
             return this;
         }
 
