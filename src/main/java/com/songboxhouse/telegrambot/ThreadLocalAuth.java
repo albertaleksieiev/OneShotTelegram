@@ -12,6 +12,17 @@ public class ThreadLocalAuth {
         }
     }
 
+    public static class ThreadLocalCopier {
+        ThreadLocalCopier(Context oldThreadContext) {
+            this.oldThreadContext = oldThreadContext;
+        }
+
+        private Context oldThreadContext;
+        public void applyToThisThread() {
+            userContext.set(oldThreadContext);
+        }
+    }
+
     private static ThreadLocal<Context> userContext
             = new ThreadLocal<>();
 
@@ -34,6 +45,12 @@ public class ThreadLocalAuth {
         }
 
         return context.userName;
+    }
+
+    // Retrieve ThreadLocalCopier instance in old thread
+    // And call ThreadLocalCopier::applyThisThread in a new thread
+    public static ThreadLocalCopier createThreadLocalCopier() {
+        return new ThreadLocalCopier(userContext.get());
     }
 }
 
