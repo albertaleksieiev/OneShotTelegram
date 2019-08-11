@@ -67,8 +67,18 @@ public class HomeView extends BotView {
         return "Home 🌏"; // This name will appear on menu
     }
 
-    @Override
     public <BT extends BotView> Class<BT>[] menuLinkStates() {
-        return new Class[]{SettingsView.class, ConfigureTokenView.class};
+        return new Class[]{
+                SettingsView.class,
+                ConfigureTokenView.class,
+                ConfigureTokenView.class,
+                TestAuthBotView.class
+        };
+    }
+
+    @Override
+    public void onSaveInstanceState(Storage data) {
+        super.onSaveInstanceState(data);
+        data.put(STORAGE_KEY_USERNAME, getContext().getSessionStorage().get(STORAGE_KEY_USERNAME, String.class));
     }
 }
