@@ -5,6 +5,11 @@ import com.songboxhouse.telegrambot.context.BotContext;
 import com.songboxhouse.telegrambot.context.UserBotContext;
 import com.songboxhouse.telegrambot.util.SessionStorage;
 import com.songboxhouse.telegrambot.util.Storage;
+import com.songboxhouse.telegrambot.util.TelegramBotUtils;
+import com.songboxhouse.telegrambot.view.BotMessage;
+import com.songboxhouse.telegrambot.view.BotView;
+import com.songboxhouse.telegrambot.view.BotViewManager;
+import com.songboxhouse.telegrambot.view.BotViewsStorage;
 import org.apache.http.util.TextUtils;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -22,7 +27,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.songboxhouse.telegrambot.util.ExecutorUtil.createExecutorService;
@@ -32,19 +36,19 @@ import static com.songboxhouse.telegrambot.util.TelegramBotUtils.getUid;
 
 
 public class BotCenter {
-    public static final String STATE_GO_BACK = "com.songboxhouse.telegrambot.STATE_GO_BACK";
-    public static final String STATE_GO_BACK_AS_NEW_MESSAGE = "com.songboxhouse.telegrambot.STATE_GO_BACK";
+    public static final String STATE_GO_BACK = "SGB_&^#";
+    public static final String STATE_GO_BACK_AS_NEW_MESSAGE = "SGBN_&_^#";
 
     private final BotViewManager botViewManager;
     private final Object telegramMethodManager;
+    private final int buttonsInRow;
     private Class<? extends BotView> initialViewClass;
     private final TelegramLongPollingBot telegramLongPollingBot;
-    private BotCenterToContextBridge botCenterToContextBridge = new BotCenterToContextBridge();
+    private final BotCenterToContextBridge botCenterToContextBridge;
 
     private Map<Integer, SessionStorage> userToSessionStorage = new ConcurrentHashMap<>();
     private Map<Integer, Object> userToLock = new ConcurrentHashMap<>();
-    private Map<Long, Integer> chatIdToLastMessage = new ConcurrentHashMap<>();
-    private BotViewsStorage botViewsStorage;
+    private final BotViewsStorage botViewsStorage;
 
     private BotCenter(Builder builder) {
         ApiContextInitializer.init(); /* Require for new Telegram bot */
@@ -53,6 +57,9 @@ public class BotCenter {
         this.botViewManager = new BotViewManager(builder.dependecyProvider);
         this.telegramMethodManager = builder.telegramMethodManager;
         this.botViewsStorage = new BotViewsStorage(botViewManager);
+        this.buttonsInRow = builder.buttonsInRow;
+
+        botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize);
 
         botViewsStorage.setInstanceSavingEnabled(builder.instanceSavedEnabled);
     }
@@ -71,58 +78,66 @@ public class BotCenter {
         synchronized (this) {
             uid = getUid(update);
         }
+        UserBotContext context = botCenterToContextBridge.buildContext(update);
 
         synchronized (userToLock.computeIfAbsent(uid, k -> new Object())) {
-            Stack<ViewStackItem> viewStack = botViewsStorage.userViewStack.get(uid);
-            if (viewStack == null || viewStack.isEmpty()) {
-                botCenterToContextBridge.navigate(initialViewClass, null, update, false);
+            if (update.getCallbackQuery() == null || update.getCallbackQuery().getData() == null) {
+                BotView rootBotView = botViewsStorage.getRootBotView(context, update);
+                if (rootBotView != null) {
+                    rootBotView.onTextReceived(update.getMessage()); // TODO test
+                } else {
+                    fallbackGoHome(update);
+                }
+
+                return;
             }
-
-            viewStack = botViewsStorage.userViewStack.get(uid);
-
-            ViewStackItem viewStackItem = viewStack.peek();
-            BotView view = viewStackItem.getView();
 
             if (update.getCallbackQuery() != null && update.getCallbackQuery().getData() != null) {
                 String data = update.getCallbackQuery().getData();
 
+                BotView view;
+                TelegramBotUtils.UUIDWithData uuidWithData = TelegramBotUtils.parseUUIDWithData(data);
+                if (uuidWithData != null) {
+
+                    view = botViewsStorage.findBotViewByUuid(context, uuidWithData.uuid, uid);
+
+                    if (uuidWithData.data.equals(STATE_GO_BACK)) {
+                        botCenterToContextBridge.goBack(view, update, false);
+                        return;
+                    } else if (uuidWithData.data.equals(STATE_GO_BACK_AS_NEW_MESSAGE)) {
+                        botCenterToContextBridge.goBack(view, update, true);
+                        return;
+                    }
+
+                    if (view == null) {
+                        System.out.println("Bot view is null, cannot process callback data");
+                        return;
+                    }
+
+
+                } else {
+                    System.out.println("Cannot find BotView uuid instance for callbackdata");
+                    return;
+                }
+
                 if (view.menuLinkStates() != null) {
                     for (Class classView : view.menuLinkStates()) {
-                        if (classView.getSimpleName().equals(data)) {
-                            botCenterToContextBridge.navigate(classView, null, update, false);
+                        if (classView.getSimpleName().equals(uuidWithData.data)) {
+                            botCenterToContextBridge.navigate(view, classView, null, update, view.menuLinksAsNewMessage());
                             return;
                         }
                     }
                 }
 
-                if (data.equals(STATE_GO_BACK)) {
-                    botCenterToContextBridge.goBack(update, false);
-                    return;
-                } else if (data.equals(STATE_GO_BACK_AS_NEW_MESSAGE)) {
-                    botCenterToContextBridge.goBack(update, true);
-                    return;
-                }
-
-                if (data.length() > 36) {
-                    String viewUuid = data.substring(0, 36);
-                    String viewData = data.substring(36);
-                    BotContext botContext = new UserBotContext(update, botCenterToContextBridge);
-                    BotView botView = botViewsStorage.findBotViewByUuid(botContext, viewUuid, uid);
-                    if (botView != null) {
-                        botView.onCreate(botView.getData());
-                        botView.onCallbackQueryDataReceived(update, viewData);
-                    } else {
-                        System.out.println("Bot view is null, cannot process callback data");
-                    }
-                } else {
-                    System.out.println("Cannot find BotView uuid instance for callbackdata");
-                }
-            }
-
-            if (update.getMessage() != null) {
-                view.onTextReceived(update.getMessage());
+                view.onCallbackQueryDataReceived(update, uuidWithData.data);
             }
         }
+    }
+
+    private void fallbackGoHome(Update update) {
+        System.out.println("fallbackGoHome");
+        BotView botView = botViewManager.buildView(botCenterToContextBridge.buildContext(update), initialViewClass);
+        botCenterToContextBridge.draw(botView, update, true);
     }
 
     private synchronized boolean sendMessage(Update update, BotView view, BotMessage message) {
@@ -132,6 +147,7 @@ public class BotCenter {
         }
 
         long chatId = getChatId(update);
+        int uid = getUid(update);
 
         ArrayList<List<InlineKeyboardButton>> listsOfInlineButtons = new ArrayList<>();
 
@@ -140,7 +156,7 @@ public class BotCenter {
                     .stream()
                     .map(list -> list.stream().peek(it -> {
                         String callbackData = it.getCallbackData();
-                        String newCallbackData = view.getUuid() + it.getCallbackData();
+                        String newCallbackData = TelegramBotUtils.createCallbackData(view, it.getCallbackData());
                         if (!TextUtils.isEmpty(callbackData) && !callbackData.contains(newCallbackData)) {
                             it.setCallbackData(newCallbackData);
                         }
@@ -153,9 +169,9 @@ public class BotCenter {
 
         List<InlineKeyboardButton> currentSetOfButtons = new ArrayList<>();
         for (Class linkClass : links) {
-            currentSetOfButtons.add(new InlineKeyboardButton(botViewManager.getView(view.getContext(), linkClass).name())
-                    .setCallbackData(linkClass.getSimpleName()));
-            if (currentSetOfButtons.size() >= 2) {
+            currentSetOfButtons.add(new InlineKeyboardButton(botViewManager.buildView(view.getContext(), linkClass).name())
+                    .setCallbackData(view.getUuid() + linkClass.getSimpleName()));
+            if (currentSetOfButtons.size() >= buttonsInRow) {
                 listsOfInlineButtons.add(currentSetOfButtons);
                 currentSetOfButtons = new ArrayList<>();
             }
@@ -166,26 +182,23 @@ public class BotCenter {
         }
 
         if (!view.getClass().equals(initialViewClass)) {
-            listsOfInlineButtons.add(Collections.singletonList(backButton(message.isSendAsNew())));
+            listsOfInlineButtons.add(Collections.singletonList(backButton(view, false)));
         }
 
         inlineKeyboardMarkup.setKeyboard(listsOfInlineButtons);
-
-        if (message.isSendAsNew()) {
-            // remove last message if some new needs to be send as new
-            chatIdToLastMessage.remove(chatId);
-        }
-
-        Integer lastMessageId = chatIdToLastMessage.get(chatId);
 
         if (TextUtils.isBlank(message.getText())) {
             System.out.println("Message cannot be empty, skip sending");
             return false;
         }
 
-        if (lastMessageId != null) {
+        if (!message.isSendAsNew() && view.getTelegramMessageId() == 0) {
+            System.out.println("Cannot send message as edited, message id is 0: " + view.getUuid());
+        }
+
+        if (!message.isSendAsNew() && view.getTelegramMessageId() != 0) {
             EditMessageText editMessageText = new EditMessageText()
-                    .setMessageId(lastMessageId)
+                    .setMessageId(view.getTelegramMessageId())
                     .setChatId(chatId)
                     .setReplyMarkup(inlineKeyboardMarkup)
                     .setText(message.getText());
@@ -197,7 +210,7 @@ public class BotCenter {
                 return true;
             } catch (TelegramApiException e) {
                 e.printStackTrace();
-                chatIdToLastMessage.remove(chatId); // cannot edit so send it as general message
+                view.setTelegramMessageId(0);
                 return sendMessage(update, view, message);
             }
         } else {
@@ -206,7 +219,8 @@ public class BotCenter {
 
             try {
                 Message sentMessage = telegramLongPollingBot.execute(sendMessage);
-                chatIdToLastMessage.put(chatId, sentMessage.getMessageId());
+                view.setTelegramMessageId(sentMessage.getMessageId());
+                // botViewsStorage.saveBotViewInstance(view, uid);
                 return true;
             } catch (TelegramApiException e) {
                 e.printStackTrace();
@@ -219,45 +233,45 @@ public class BotCenter {
     public class BotCenterToContextBridge {
         private ExecutorService executorService;
 
-        BotCenterToContextBridge() {
-            this.executorService = createExecutorService(16);
+        BotCenterToContextBridge(int executorServiceThreadSize) {
+            this.executorService = createExecutorService(executorServiceThreadSize);
         }
 
-        private void draw(ViewStackItem viewStackItem, Update update, boolean sendAsNewMessage) {
-            viewStackItem.getView().getData().put(Storage.KEY_TELEGRAM_UPDATE, update);
-            viewStackItem.getView().onCreate(viewStackItem.getView().getData());
+        private void draw(BotView botView, Update update, boolean sendAsNewMessage) {
+            botView.draw(this, update, sendAsNewMessage);
 
-            BotMessage botMessage = new BotMessage(viewStackItem.draw(), sendAsNewMessage);
-            sendMessage(botMessage, viewStackItem.getView(), update);
-            viewStackItem.getView().onStart();
-
-            botViewsStorage.saveBotViewInstance(viewStackItem.getView(), getUid(update));
+            botViewsStorage.saveBotViewInstance(botView, getUid(update));
+            botViewsStorage.setRootBotView(update, botView);
         }
 
-        public <T extends BotView> void navigate(Class<T> view, Storage data, Update update, boolean asNewMessage) {
-            navigate(view, update, data == null ? new Storage() : data, asNewMessage);
+        public <T extends BotView> BotView navigate(BotView callerView, Class<T> view, Storage data, Update update, boolean asNewMessage) {
+            return navigate(callerView, view, update, data == null ? new Storage() : data, asNewMessage);
         }
 
-        private <T extends BotView> void navigate(Class<T> targetView, Update update, Storage data, boolean asNewMessage) {
-            synchronized (botViewsStorage.userViewStack) {
-                int uid = getUid(update);
-                BotContext botContext = new UserBotContext(update, this);
-                Stack<ViewStackItem> botViews = botViewsStorage.userViewStack.computeIfAbsent(uid, k -> new Stack<>());
-                BotView view = botViewManager.getView(botContext, targetView);
-                if (!botViews.isEmpty()) {
-                    botViews.peek().getView().onStop();
+        private <T extends BotView> BotView navigate(BotView callerView, Class<T> targetViewClass, Update update, Storage data, boolean asNewMessage) {
+            synchronized (botViewsStorage) {
+                BotContext botContext = buildContext(update);
+
+                BotView targetView = botViewManager.buildView(botContext, targetViewClass);
+                targetView.setParentView(callerView);
+
+                if (callerView != null) {
+                    callerView.onStop();
+
+                    // Attach message id from caller view to target
+                    if (!asNewMessage) {
+                        targetView.setTelegramMessageId(callerView.getTelegramMessageId());
+                    }
                 }
 
-                ViewStackItem viewStackItem = new ViewStackItem(view, data);
-                botViews.add(viewStackItem);
-
-                botViewsStorage.userViewStack.put(uid, botViews);
+                targetView.setData(data);
 
                 try {
-                    draw(viewStackItem, update, asNewMessage);
+                    draw(targetView, update, asNewMessage);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                return targetView;
             }
         }
 
@@ -272,30 +286,25 @@ public class BotCenter {
             return userToSessionStorage.computeIfAbsent(uid, k -> new SessionStorage());
         }
 
-        void goBack(Update update, boolean sendAsNewMessage) {
-            synchronized (botViewsStorage.userViewStack) {
+        void goBack(BotView target, Update update, boolean sendAsNewMessage) {
+            synchronized (botViewsStorage) {
                 int uid = getUid(update);
-                Stack<ViewStackItem> botViews = botViewsStorage.userViewStack.computeIfAbsent(uid, k -> new Stack<>());
 
-                if (botViews.isEmpty()) {
-                    System.out.println("Cannot navigate back, stack is empty");
+                BotView parent = null;
+                if (target.getParentViewId().equals(BotView.PARENT_ID_ROOT)
+                        || (parent = botViewsStorage.findBotViewByUuid(buildContext(update), target.getParentViewId(), uid)) == null) {
+                    System.out.println("Cannot navigate back this is leaf");
+                    fallbackGoHome(update);
                     return;
                 }
+                target.onStop();
+                // TODO REMOVE FROM STORAGE
+                parent = parent.clone(botViewManager, botCenterToContextBridge, update);
+                parent.setTelegramMessageId(target.getTelegramMessageId());
 
-                botViews.pop().getView().onStop();
-
-                if (botViews.isEmpty()) {
-                    navigate(initialViewClass, null, update, false);
-                } else {
-                    ViewStackItem viewStackItem = botViews.peek();
-
-                    try {
-                        draw(viewStackItem, update, sendAsNewMessage);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    botViewsStorage.userViewStack.put(uid, botViews);
+                draw(parent, update, sendAsNewMessage);
+                if (sendAsNewMessage) {
+                    botViewsStorage.setRootBotView(update, parent);
                 }
             }
         }
@@ -307,6 +316,10 @@ public class BotCenter {
         public ExecutorService executorService() {
             return executorService;
         }
+
+        public UserBotContext buildContext(Update update) {
+            return new UserBotContext(update, this);
+        }
     }
 
     public static class Builder {
@@ -316,6 +329,8 @@ public class BotCenter {
         private final Class initialViewClass;
         private Object telegramMethodManager;
         private boolean instanceSavedEnabled = true;
+        private int buttonsInRow = 2;
+        private int executorServiceThreadSize = 16;
 
         public <BV extends BotView> Builder(String telegramBotName, String telegramBotToken, Class<BV> initialViewClass) {
             this.telegramBotName = telegramBotName;
@@ -335,6 +350,16 @@ public class BotCenter {
 
         public Builder setInstanceSavingEnabled(boolean enabled) {
             instanceSavedEnabled = enabled;
+            return this;
+        }
+
+        public Builder setButtonsInRow(int buttonsInRow) {
+            this.buttonsInRow = buttonsInRow;
+            return this;
+        }
+
+        public Builder setExecutorServiceThreadSize(int executorServiceThreadSize) {
+            this.executorServiceThreadSize = executorServiceThreadSize;
             return this;
         }
 

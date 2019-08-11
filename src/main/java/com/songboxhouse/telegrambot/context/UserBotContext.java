@@ -1,10 +1,10 @@
 package com.songboxhouse.telegrambot.context;
 
 import com.songboxhouse.telegrambot.BotCenter;
-import com.songboxhouse.telegrambot.BotMessage;
+import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.util.SessionStorage;
 import com.songboxhouse.telegrambot.util.Storage;
-import com.songboxhouse.telegrambot.BotView;
+import com.songboxhouse.telegrambot.view.BotView;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 
@@ -20,8 +20,8 @@ public class UserBotContext extends BotContext {
     }
 
     @Override
-    public <BT extends BotView> void navigate(Class<BT> view, Storage data, boolean asNewMessage) {
-        botCenterToContextBridge.navigate(view, data, update, asNewMessage);
+    public <BT extends BotView> void navigate(BotView callerView, Class<BT> view, Storage data, boolean asNewMessage) {
+        botCenterToContextBridge.navigate(callerView, view, data, update, asNewMessage);
     }
 
     @Override
@@ -42,5 +42,14 @@ public class UserBotContext extends BotContext {
     @Override
     public SessionStorage getSessionStorage() {
         return botCenterToContextBridge.getSessionStorage(update);
+    }
+
+    @Override
+    public Update getTelegramUpdate() {
+        return update;
+    }
+
+    public BotCenter.BotCenterToContextBridge getBotCenterToContextBridge() {
+        return botCenterToContextBridge;
     }
 }

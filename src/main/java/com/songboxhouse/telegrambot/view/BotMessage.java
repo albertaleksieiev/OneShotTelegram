@@ -1,4 +1,4 @@
-package com.songboxhouse.telegrambot;
+package com.songboxhouse.telegrambot.view;
 
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 

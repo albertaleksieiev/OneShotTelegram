@@ -1,4 +1,4 @@
-package com.songboxhouse.telegrambot;
+package com.songboxhouse.telegrambot.view;
 
 import com.songboxhouse.telegrambot.anotations.InstanceProvider;
 import com.songboxhouse.telegrambot.context.BotContext;
@@ -12,11 +12,11 @@ import java.util.List;
 public class BotViewManager {
     private Object dependecyProvider;
 
-    BotViewManager(Object dependecyProvider) {
+    public BotViewManager(Object dependecyProvider) {
         this.dependecyProvider = dependecyProvider;
     }
 
-    <BV extends BotView> BotView getView(BotContext botContext, Class<BV> view) {
+    public <BV extends BotView> BotView buildView(BotContext botContext, Class<BV> view) {
         try {
             Constructor<?> constructor = view.getConstructors()[0];
             Class<?>[] parameterTypes = constructor.getParameterTypes();
