@@ -6,6 +6,7 @@ import com.songboxhouse.telegrambot.context.UserBotContext;
 import com.songboxhouse.telegrambot.util.SessionStorage;
 import com.songboxhouse.telegrambot.util.Storage;
 import com.songboxhouse.telegrambot.util.TelegramBotUtils;
+import com.songboxhouse.telegrambot.util.UpdateReceiveListener;
 import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.view.BotView;
 import com.songboxhouse.telegrambot.view.BotViewManager;
@@ -53,7 +54,8 @@ public class BotCenter {
     private BotCenter(Builder builder) {
         ApiContextInitializer.init(); /* Require for new Telegram bot */
         this.initialViewClass = builder.initialViewClass;
-        this.telegramLongPollingBot = new TelegramLongPollingBotImpl(builder.telegramBotToken, builder.telegramBotName, this);
+        this.telegramLongPollingBot = new TelegramLongPollingBotImpl(builder.telegramBotToken, builder.telegramBotName,
+                builder.updateReceiveListener, this);
         this.botViewManager = new BotViewManager(builder.dependecyProvider);
         this.telegramMethodManager = builder.telegramMethodManager;
         this.botViewsStorage = new BotViewsStorage(botViewManager);
@@ -331,6 +333,7 @@ public class BotCenter {
         private boolean instanceSavedEnabled = true;
         private int buttonsInRow = 2;
         private int executorServiceThreadSize = 16;
+        private UpdateReceiveListener updateReceiveListener;
 
         public <BV extends BotView> Builder(String telegramBotName, String telegramBotToken, Class<BV> initialViewClass) {
             this.telegramBotName = telegramBotName;
@@ -360,6 +363,11 @@ public class BotCenter {
 
         public Builder setExecutorServiceThreadSize(int executorServiceThreadSize) {
             this.executorServiceThreadSize = executorServiceThreadSize;
+            return this;
+        }
+
+        public Builder setUpdateReceiveListener(UpdateReceiveListener updateReceiveListener) {
+            this.updateReceiveListener = updateReceiveListener;
             return this;
         }
 

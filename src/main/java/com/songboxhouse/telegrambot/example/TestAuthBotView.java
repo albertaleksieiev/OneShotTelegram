@@ -1,6 +1,6 @@
 package com.songboxhouse.telegrambot.example;
 
-import com.songboxhouse.telegrambot.ThreadLocalAuth;
+import com.songboxhouse.telegrambot.auth.ThreadLocalAuth;
 import com.songboxhouse.telegrambot.context.BotContext;
 import com.songboxhouse.telegrambot.util.Storage;
 import com.songboxhouse.telegrambot.view.BotView;
