@@ -64,6 +64,7 @@ public class BotCenter {
         botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize);
 
         botViewsStorage.setInstanceSavingEnabled(builder.instanceSavedEnabled);
+        botViewsStorage.setMaxUserViewCache(builder.maxBotViewCache);
     }
 
     public void start() {
@@ -330,7 +331,8 @@ public class BotCenter {
         private final String telegramBotToken;
         private final Class initialViewClass;
         private Object telegramMethodManager;
-        private boolean instanceSavedEnabled = true;
+        private boolean instanceSavedEnabled = false;
+        private int maxBotViewCache = 60;
         private int buttonsInRow = 2;
         private int executorServiceThreadSize = 16;
         private UpdateReceiveListener updateReceiveListener;
@@ -368,6 +370,11 @@ public class BotCenter {
 
         public Builder setUpdateReceiveListener(UpdateReceiveListener updateReceiveListener) {
             this.updateReceiveListener = updateReceiveListener;
+            return this;
+        }
+
+        public Builder setMaxBotViewCache(int maxBotViewCache) {
+            this.maxBotViewCache = maxBotViewCache;
             return this;
         }
 
