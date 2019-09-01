@@ -3,10 +3,7 @@ package com.songboxhouse.telegrambot;
 
 import com.songboxhouse.telegrambot.context.BotContext;
 import com.songboxhouse.telegrambot.context.UserBotContext;
-import com.songboxhouse.telegrambot.util.SessionStorage;
-import com.songboxhouse.telegrambot.util.Storage;
-import com.songboxhouse.telegrambot.util.TelegramBotUtils;
-import com.songboxhouse.telegrambot.util.UpdateReceiveListener;
+import com.songboxhouse.telegrambot.util.*;
 import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.view.BotView;
 import com.songboxhouse.telegrambot.view.BotViewManager;
@@ -76,7 +73,7 @@ public class BotCenter {
         }
     }
 
-    void onUpdateReceived(Update update) {
+    private void onUpdateReceivedUnsafe(Update update) {
         int uid;
         synchronized (this) {
             uid = getUid(update);
@@ -137,6 +134,14 @@ public class BotCenter {
         }
     }
 
+    void onUpdateReceived(Update update) {
+        try {
+            onUpdateReceivedUnsafe(update);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void fallbackGoHome(Update update) {
         System.out.println("fallbackGoHome");
         BotView botView = botViewManager.buildView(botCenterToContextBridge.buildContext(update), initialViewClass);
@@ -150,9 +155,7 @@ public class BotCenter {
         }
 
         long chatId = getChatId(update);
-        int uid = getUid(update);
-
-        ArrayList<List<InlineKeyboardButton>> listsOfInlineButtons = new ArrayList<>();
+        InlineKeyboardBuilder inlineKeyboardBuilder = new InlineKeyboardBuilder(buttonsInRow);
 
         if (message.getInlineButtons() != null && !message.getInlineButtons().isEmpty()) {
             List<List<InlineKeyboardButton>> buttons = message.getInlineButtons()
@@ -164,31 +167,24 @@ public class BotCenter {
                             it.setCallbackData(newCallbackData);
                         }
                     }).collect(Collectors.toList())).collect(Collectors.toList());
-            listsOfInlineButtons.addAll(buttons);
+            inlineKeyboardBuilder.addAll(buttons);
         }
 
         // Default inline buttons
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();  // TODO split
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
 
-        List<InlineKeyboardButton> currentSetOfButtons = new ArrayList<>();
+        inlineKeyboardBuilder.createRow();
         for (Class linkClass : links) {
-            currentSetOfButtons.add(new InlineKeyboardButton(botViewManager.buildView(view.getContext(), linkClass).name())
-                    .setCallbackData(view.getUuid() + linkClass.getSimpleName()));
-            if (currentSetOfButtons.size() >= buttonsInRow) {
-                listsOfInlineButtons.add(currentSetOfButtons);
-                currentSetOfButtons = new ArrayList<>();
-            }
-        }
-
-        if (currentSetOfButtons.size() > 0) {
-            listsOfInlineButtons.add(currentSetOfButtons);
+            InlineKeyboardButton button = new InlineKeyboardButton(botViewManager.buildView(view.getContext(), linkClass).name())
+                    .setCallbackData(view.getUuid() + linkClass.getSimpleName());
+            inlineKeyboardBuilder.appendButtonToTheLastRow(button);
         }
 
         if (!view.getClass().equals(initialViewClass)) {
-            listsOfInlineButtons.add(Collections.singletonList(backButton(view, false)));
+            inlineKeyboardBuilder.appendButtonInNewRow(backButton(view, false));
         }
 
-        inlineKeyboardMarkup.setKeyboard(listsOfInlineButtons);
+        inlineKeyboardMarkup.setKeyboard(inlineKeyboardBuilder.build());
 
         if (TextUtils.isBlank(message.getText())) {
             System.out.println("Message cannot be empty, skip sending");
