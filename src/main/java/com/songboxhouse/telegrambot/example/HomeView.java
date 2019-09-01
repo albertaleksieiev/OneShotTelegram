@@ -1,5 +1,6 @@
 package com.songboxhouse.telegrambot.example;
 
+import com.songboxhouse.telegrambot.util.InlineKeyboardBuilder;
 import com.songboxhouse.telegrambot.util.TelegramBotUtils;
 import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.context.BotContext;
@@ -41,21 +42,19 @@ public class HomeView extends BotView {
 
         String token = db.getUserToken();
 
-        String message = "🖲 View: " + this.getClass().getSimpleName() + ".java\n" +
-                "🎃" + getUuid() + "\n" +
-                "Welcome Home " +
-                (userName == null ? "" : userName)
-                + "🏠"
-                + "\nYour token `" + (token == null ? "?" : token) + "`\n"
-                + (justConfigured != null && justConfigured ? "\nAnd thanks for configuration!" : "");
+        BotMessage.Builder messageBuilder = BotMessage.builder()
+                .appendText("🖲 View: " + this.getClass().getSimpleName() + ".java")
+                .appendText("🎃" + getUuid())
+                .appendText("Welcome Home " + (userName == null ? "" : userName))
+                .appendText("🏠")
+                .appendText("Your token `" + (token == null ? "?" : token) + "`")
+                .appendText(justConfigured != null && justConfigured ? "\nAnd thanks for configuration!" : "")
+                .setSendAsNew(false);
 
+        messageBuilder.inlineKeyboard()
+                .appendButtonToTheLastRow(InlineKeyboardBuilder.buildButton("Run super configuration 💥", BUTTON_KEY_RUN_SUPER_CONFIG));
 
-        BotMessage botMessage = new BotMessage(message, false);
-
-        InlineKeyboardButton button = new InlineKeyboardButton("Run super configuration 💥")
-                .setCallbackData(BUTTON_KEY_RUN_SUPER_CONFIG);
-        botMessage.setInlineButtons(Arrays.asList(Arrays.asList(button)));
-        sendMessage(botMessage);
+        sendMessage(messageBuilder.build());
     }
 
     @Override
