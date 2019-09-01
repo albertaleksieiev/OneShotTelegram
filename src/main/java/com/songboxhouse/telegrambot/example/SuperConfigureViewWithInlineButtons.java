@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.songboxhouse.telegrambot.util.InlineKeyboardBuilder.buildButton;
+
 public class SuperConfigureViewWithInlineButtons extends BotView {
     public static final String BUTTON_OK = "ok";
     public static final String BUTTON_CANCEL = "cancel";
@@ -73,34 +75,25 @@ public class SuperConfigureViewWithInlineButtons extends BotView {
         if (counter == null) {
             counter = 10000;
         }
-        counter+=1;
+        counter += 1;
         getData().put(COUNTER, counter);
 
-        BotMessage message = new BotMessage("Counter = " + counter + "\n" +
-                "Run super configuration for view " + describeView());
+        BotMessage.Builder botMessageBuilder = BotMessage.builder()
+                .appendText("Counter = " + counter)
+                .appendText("Run super configuration for view " + describeView())
+                .setSendAsNew(false);
+        botMessageBuilder.inlineKeyboard()
+                .appendButtonToTheLastRow(buildButton("Ok 👍", BUTTON_OK))
+                .appendButtonToTheLastRow(buildButton("No 🙅", BUTTON_CANCEL))
+                .appendButtonToTheLastRow(buildButton("Rerun super configuration 💥", BUTTON_RERUN_CONFIGURATION));
 
-        ArrayList<List<InlineKeyboardButton>> buttons = new ArrayList<>();
-
-        buttons.add(buildButton("Ok 👍", BUTTON_OK));
-        buttons.add(buildButton("No 🙅", BUTTON_CANCEL));
-        buttons.add(buildButton("Rerun super configuration 💥", BUTTON_RERUN_CONFIGURATION));
-        message.setInlineButtons(buttons);
-        message.setSendAsNew(false);
-        sendMessage(message);
+        sendMessage(botMessageBuilder.build());
     }
-
 
 
     private String describeView() {
         return "Level 🛤 = " + getData().get(ARG_NESTED_LEVEL, Integer.class) + "\n"
                 + "UUID = " + getUuid();
-    }
-
-    private List<InlineKeyboardButton> buildButton(String text, String data) {
-        InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton()
-                .setText(text)
-                .setCallbackData(data);
-        return Arrays.asList(new InlineKeyboardButton[]{inlineKeyboardButton});
     }
 
     @Override
