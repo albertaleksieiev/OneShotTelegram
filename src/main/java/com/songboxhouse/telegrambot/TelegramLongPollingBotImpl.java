@@ -1,22 +1,41 @@
 package com.songboxhouse.telegrambot;
 
+import com.songboxhouse.telegrambot.util.ExecutorUtil;
+import com.songboxhouse.telegrambot.util.UpdateReceiveListener;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-class TelegramLongPollingBotImpl extends TelegramLongPollingBot {
+import java.util.concurrent.ExecutorService;
+
+public class TelegramLongPollingBotImpl extends TelegramLongPollingBot {
     private final String botToken;
     private final BotCenter botCenter;
     private final String botName;
+    private ExecutorService telegramExecutorService;
+    private UpdateReceiveListener updateReceiveListener;
 
-    TelegramLongPollingBotImpl(String botToken, String botName, BotCenter botCenter) {
+    TelegramLongPollingBotImpl(String botToken, String botName,
+                               UpdateReceiveListener updateReceiveListener, BotCenter botCenter) {
         this.botToken = botToken;
+        this.updateReceiveListener = updateReceiveListener;
         this.botCenter = botCenter;
         this.botName = botName;
+        telegramExecutorService = ExecutorUtil.createExecutorService(16);
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        botCenter.onUpdateReceived(update);
+        telegramExecutorService.submit(() -> {
+            if (updateReceiveListener != null) {
+                updateReceiveListener.willReceiveUpdate(update);
+            }
+
+            botCenter.onUpdateReceived(update);
+
+            if (updateReceiveListener != null) {
+                updateReceiveListener.didReceiveUpdate(update);
+            }
+        });
     }
 
     @Override

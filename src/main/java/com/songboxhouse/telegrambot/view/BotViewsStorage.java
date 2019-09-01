@@ -6,35 +6,32 @@ import com.songboxhouse.telegrambot.util.Storage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.io.*;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.songboxhouse.telegrambot.util.TelegramBotUtils.getUid;
 
 public class BotViewsStorage {
     private final BotViewManager botViewManager;
-    private boolean instanceSavingEnabled = true;
+    private boolean instanceSavingEnabled;
+    private int maxUserViewCache;
 
     public BotViewsStorage(BotViewManager botViewManager) {
         this.botViewManager = botViewManager;
     }
 
-    public final Map<Integer, Stack<BotView>> userViewStack = new ConcurrentHashMap<>();
-    public final Map<Integer, BotView> rootBotViews = new ConcurrentHashMap<>();
-    public static final int MAX_STACK_SIZE = 30;
+    private final Map<Integer, LinkedList<BotView>> userViewCache = new ConcurrentHashMap<>();
+    private final Map<Integer, BotView> rootBotViews = new ConcurrentHashMap<>();
 
-    public static final Boolean DISABLE_SAVING_LOCAL_INSTANCES = true;
     private static final String STORAGE_FOLDER = ".data/savedViewInstances";
 
     private BotView findBotViewByUuidInStack(String uuid, Integer userID) {
-        Stack<BotView> botViewStack = userViewStack.get(userID);
-        if (botViewStack == null) {
+        LinkedList<BotView> botViewCache = userViewCache.get(userID);
+        if (botViewCache == null) {
             return null;
         }
 
-        for (BotView aBotViewStack : botViewStack) {
+        for (BotView aBotViewStack : botViewCache) {
             if (aBotViewStack.getUuid().equals(uuid)) {
                 return aBotViewStack;
             }
@@ -44,7 +41,7 @@ public class BotViewsStorage {
 
     public synchronized void setRootBotView(Update update, BotView botView) {
         int uid = getUid(update);
-        if (DISABLE_SAVING_LOCAL_INSTANCES) {
+        if (!instanceSavingEnabled) {
             rootBotViews.put(uid, botView);
             return;
         }
@@ -84,7 +81,7 @@ public class BotViewsStorage {
     public synchronized BotView getRootBotView(UserBotContext context, Update update) {
         int uid = getUid(update);
 
-        if (DISABLE_SAVING_LOCAL_INSTANCES) {
+        if (!instanceSavingEnabled) {
             return rootBotViews.get(uid);
         }
 
@@ -122,18 +119,20 @@ public class BotViewsStorage {
     }
 
     public void saveBotViewInstance(BotView botView, Integer userID) {
-        Stack<BotView> stackOfViews = userViewStack.getOrDefault(userID, new Stack<>());
-        int indexInStack = stackOfViews.indexOf(botView);
-        if (indexInStack != -1) {
-            stackOfViews.set(indexInStack, botView);
-        } else {
-            stackOfViews.push(botView);
-        }
-        if (stackOfViews.size() >= MAX_STACK_SIZE) {
-            stackOfViews.pop();
+        LinkedList<BotView> botViewCache = userViewCache.getOrDefault(userID, new LinkedList<>());
+
+        // Remove if exist
+        botViewCache.removeFirstOccurrence(botView);
+
+        // Insert at begin
+        botViewCache.push(botView);
+
+        // Remove last
+        if (botViewCache.size() >= maxUserViewCache) {
+            botViewCache.removeLast();
         }
 
-        userViewStack.put(userID, stackOfViews);
+        userViewCache.put(userID, botViewCache);
 
         if (!instanceSavingEnabled) {
             return;
@@ -185,5 +184,9 @@ public class BotViewsStorage {
 
     public void setInstanceSavingEnabled(boolean instanceSavingEnabled) {
         this.instanceSavingEnabled = instanceSavingEnabled;
+    }
+
+    public void setMaxUserViewCache(int maxUserViewCache) {
+        this.maxUserViewCache = maxUserViewCache;
     }
 }

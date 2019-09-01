@@ -80,9 +80,13 @@ public class HomeView extends BotView {
         return "Home 🌏"; // This name will appear on menu
     }
 
-    @Override
     public <BT extends BotView> Class<BT>[] menuLinkStates() {
-        return new Class[]{SettingsView.class, ConfigureTokenView.class, ConfigureTokenView.class};
+        return new Class[]{
+                SettingsView.class,
+                ConfigureTokenView.class,
+                ConfigureTokenView.class,
+                TestAuthBotView.class
+        };
     }
 
     @Override

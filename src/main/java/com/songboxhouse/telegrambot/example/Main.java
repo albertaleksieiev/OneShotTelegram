@@ -1,8 +1,10 @@
 package com.songboxhouse.telegrambot.example;
 
+import com.songboxhouse.telegrambot.TelegramLongPollingBotImpl;
 import com.songboxhouse.telegrambot.anotations.DependencyProvider;
 import com.songboxhouse.telegrambot.anotations.InstanceProvider;
 import com.songboxhouse.telegrambot.BotCenter;
+import com.songboxhouse.telegrambot.auth.ThreadLocalAuthUpdateReceiveListener;
 
 public class Main {
     private static final String BOT_TOKEN = null; // Retrieve it from here https://telegram.me/BotFather
@@ -18,6 +20,7 @@ public class Main {
 
         BotCenter botCenter = new BotCenter.Builder(BOT_NAME, BOT_TOKEN, HomeView.class /*Initial View*/)
                 .setDependecyProvider(new MyDependencyProvider(db))
+                .setUpdateReceiveListener(new ThreadLocalAuthUpdateReceiveListener()) // Apply ThreadLocalAuth for Bot active thread
                 .build();
         botCenter.start();
 
