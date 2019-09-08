@@ -1,7 +1,6 @@
 package com.songboxhouse.telegrambot.view;
 
 import com.songboxhouse.telegrambot.anotations.InstanceProvider;
-import com.songboxhouse.telegrambot.context.BotContext;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

@@ -1,10 +1,8 @@
-package com.songboxhouse.telegrambot.context;
+package com.songboxhouse.telegrambot.view;
 
 import com.songboxhouse.telegrambot.BotCenter;
-import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.util.SessionStorage;
 import com.songboxhouse.telegrambot.util.Storage;
-import com.songboxhouse.telegrambot.view.BotView;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.bots.AbsSender;
 
@@ -49,7 +47,8 @@ public class UserBotContext extends BotContext {
         return update;
     }
 
-    public BotCenter.BotCenterToContextBridge getBotCenterToContextBridge() {
+    @Override
+    protected BotCenter.BotCenterToContextBridge getBotCenterToContextBridge() {
         return botCenterToContextBridge;
     }
 }

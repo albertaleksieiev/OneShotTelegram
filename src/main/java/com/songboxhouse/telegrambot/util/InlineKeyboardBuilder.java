@@ -1,15 +1,21 @@
 package com.songboxhouse.telegrambot.util;
 
+import com.songboxhouse.telegrambot.CallbackDataManager;
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.songboxhouse.telegrambot.CallbackDataManager.STORAGE_KEY_CALLBACK_ACTION;
+
 public class InlineKeyboardBuilder {
     private List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
     private int maxButtonsInARow = 2;
+
 
     public InlineKeyboardBuilder(int maxButtonsInARow) {
         this.maxButtonsInARow = maxButtonsInARow;
@@ -78,17 +84,5 @@ public class InlineKeyboardBuilder {
     public InlineKeyboardBuilder setMaxButtonsInARow(int max) {
         this.maxButtonsInARow = max;
         return this;
-    }
-
-    public static InlineKeyboardButton buildButton(String text, String data) {
-        return new InlineKeyboardButton()
-                .setText(text)
-                .setCallbackData(data);
-    }
-
-    public static InlineKeyboardButton buildButton(String text, URL url) {
-        return new InlineKeyboardButton()
-                .setText(text)
-                .setUrl(url.toString());
     }
 }

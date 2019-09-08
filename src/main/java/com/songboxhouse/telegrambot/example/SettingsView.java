@@ -1,7 +1,7 @@
 package com.songboxhouse.telegrambot.example;
 
 import com.songboxhouse.telegrambot.view.BotView;
-import com.songboxhouse.telegrambot.context.BotContext;
+import com.songboxhouse.telegrambot.view.BotContext;
 import com.songboxhouse.telegrambot.util.SessionStorage;
 import com.songboxhouse.telegrambot.util.Storage;
 import org.telegram.telegrambots.meta.api.objects.Message;

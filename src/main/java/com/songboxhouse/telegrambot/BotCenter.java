@@ -1,8 +1,8 @@
 package com.songboxhouse.telegrambot;
 
 
-import com.songboxhouse.telegrambot.context.BotContext;
-import com.songboxhouse.telegrambot.context.UserBotContext;
+import com.songboxhouse.telegrambot.view.BotContext;
+import com.songboxhouse.telegrambot.view.UserBotContext;
 import com.songboxhouse.telegrambot.util.*;
 import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.view.BotView;
@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import static com.songboxhouse.telegrambot.CallbackDataManager.STORAGE_KEY_CALLBACK_ACTION;
 import static com.songboxhouse.telegrambot.util.ExecutorUtil.createExecutorService;
 import static com.songboxhouse.telegrambot.util.TelegramBotUtils.backButton;
 import static com.songboxhouse.telegrambot.util.TelegramBotUtils.getChatId;
@@ -47,6 +48,7 @@ public class BotCenter {
     private Map<Integer, SessionStorage> userToSessionStorage = new ConcurrentHashMap<>();
     private Map<Integer, Object> userToLock = new ConcurrentHashMap<>();
     private final BotViewsStorage botViewsStorage;
+    private final CallbackDataManager callbackDataManager;
 
     private BotCenter(Builder builder) {
         ApiContextInitializer.init(); /* Require for new Telegram bot */
@@ -56,6 +58,7 @@ public class BotCenter {
         this.botViewManager = new BotViewManager(builder.dependecyProvider);
         this.telegramMethodManager = builder.telegramMethodManager;
         this.botViewsStorage = new BotViewsStorage(botViewManager);
+        this.callbackDataManager = new CallbackDataManager(builder.callbackDataSavingEnabled, builder.maxCallbackDataCache);
         this.buttonsInRow = builder.buttonsInRow;
 
         botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize);
@@ -129,7 +132,16 @@ public class BotCenter {
                     }
                 }
 
-                view.onCallbackQueryDataReceived(update, uuidWithData.data);
+                String action = uuidWithData.data;
+                Storage storage = callbackDataManager.tryParseData(update, uuidWithData.data);
+                if (storage != null) {
+                    String storageAction = storage.get(STORAGE_KEY_CALLBACK_ACTION, String.class);
+                    if (storageAction != null) {
+                        action = storageAction;
+                    }
+                }
+
+                view.onCallbackQueryDataReceived(update, action, storage);
             }
         }
     }
@@ -316,6 +328,10 @@ public class BotCenter {
             return executorService;
         }
 
+        public CallbackDataManager getCallbackDataManager() {
+            return callbackDataManager;
+        }
+
         public UserBotContext buildContext(Update update) {
             return new UserBotContext(update, this);
         }
@@ -329,6 +345,10 @@ public class BotCenter {
         private Object telegramMethodManager;
         private boolean instanceSavedEnabled = false;
         private int maxBotViewCache = 60;
+
+        private boolean callbackDataSavingEnabled = false;
+        private int maxCallbackDataCache = 256;
+
         private int buttonsInRow = 2;
         private int executorServiceThreadSize = 16;
         private UpdateReceiveListener updateReceiveListener;
@@ -371,6 +391,16 @@ public class BotCenter {
 
         public Builder setMaxBotViewCache(int maxBotViewCache) {
             this.maxBotViewCache = maxBotViewCache;
+            return this;
+        }
+
+        public Builder setCallbackDataSavingEnabled(boolean callbackDataSavingEnabled) {
+            this.callbackDataSavingEnabled = callbackDataSavingEnabled;
+            return this;
+        }
+
+        public Builder setMaxCallbackDataCache(int maxCallbackDataCache) {
+            this.maxCallbackDataCache = maxCallbackDataCache;
             return this;
         }
 
