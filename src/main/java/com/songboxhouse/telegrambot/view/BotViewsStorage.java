@@ -1,7 +1,5 @@
 package com.songboxhouse.telegrambot.view;
 
-import com.songboxhouse.telegrambot.context.BotContext;
-import com.songboxhouse.telegrambot.context.UserBotContext;
 import com.songboxhouse.telegrambot.util.Storage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 

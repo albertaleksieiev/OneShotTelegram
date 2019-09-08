@@ -1,22 +1,17 @@
 package com.songboxhouse.telegrambot.example;
 
-import com.songboxhouse.telegrambot.util.InlineKeyboardBuilder;
-import com.songboxhouse.telegrambot.util.TelegramBotUtils;
 import com.songboxhouse.telegrambot.view.BotMessage;
-import com.songboxhouse.telegrambot.context.BotContext;
+import com.songboxhouse.telegrambot.view.BotContext;
 import com.songboxhouse.telegrambot.util.Storage;
 import com.songboxhouse.telegrambot.view.BotView;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-
-import java.util.Arrays;
-import java.util.UUID;
 
 public class HomeView extends BotView {
     public static final String STORAGE_KEY_USERNAME = "STORAGE_KEY_USERNAME";
     public static final String ARG_JUST_CONFIGURED = "ARG_JUST_CONFIGURED";
     public static final String BUTTON_KEY_RUN_SUPER_CONFIG = "run_config";
+    public static final String ARG_CONFIGURATION_START_LEVEL = "ARG_CONFIGURATION_START_LEVEL";
 
     private final Main.DBInMemory db;
 
@@ -52,7 +47,11 @@ public class HomeView extends BotView {
                 .setSendAsNew(false);
 
         messageBuilder.inlineKeyboard()
-                .appendButtonToTheLastRow(InlineKeyboardBuilder.buildButton("Run super configuration 💥", BUTTON_KEY_RUN_SUPER_CONFIG));
+                .appendButtonToTheLastRow(
+                        buildButton("Run super configuration 💥",
+                                BUTTON_KEY_RUN_SUPER_CONFIG,
+                                new Storage().put(ARG_CONFIGURATION_START_LEVEL, 5))
+                );
 
         sendMessage(messageBuilder.build());
     }
@@ -64,11 +63,11 @@ public class HomeView extends BotView {
     }
 
     @Override
-    public void onCallbackQueryDataReceived(Update update, String data) {
-        super.onCallbackQueryDataReceived(update, data);
-        if (data.equals(BUTTON_KEY_RUN_SUPER_CONFIG)) {
+    public void onCallbackQueryDataReceived(Update update, String action, Storage data) {
+        super.onCallbackQueryDataReceived(update, action, data);
+        if (action.equals(BUTTON_KEY_RUN_SUPER_CONFIG)) {
             Storage storage = new Storage()
-                    .put(SuperConfigureViewWithInlineButtons.ARG_NESTED_LEVEL, 1);
+                    .put(SuperConfigureViewWithInlineButtons.ARG_NESTED_LEVEL, data.get(ARG_CONFIGURATION_START_LEVEL, Integer.class));
 
             navigate(SuperConfigureViewWithInlineButtons.class, storage, true);
         }

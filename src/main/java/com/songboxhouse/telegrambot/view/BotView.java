@@ -1,15 +1,18 @@
 package com.songboxhouse.telegrambot.view;
 
 import com.songboxhouse.telegrambot.BotCenter;
-import com.songboxhouse.telegrambot.context.BotContext;
+import com.songboxhouse.telegrambot.CallbackDataManager;
 import com.songboxhouse.telegrambot.util.Storage;
 import com.songboxhouse.telegrambot.util.TelegramBotUtils;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.bots.AbsSender;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Objects;
-import java.util.UUID;
+
+import static com.songboxhouse.telegrambot.CallbackDataManager.STORAGE_KEY_CALLBACK_ACTION;
 
 public abstract class BotView {
     public static final String PARENT_ID_ROOT = "root";
@@ -56,7 +59,7 @@ public abstract class BotView {
         isDestroyed = true;
     }
 
-    public void onCallbackQueryDataReceived(Update update, String data) {
+    public void onCallbackQueryDataReceived(Update update, String action, Storage data) {
 
     }
 
@@ -198,5 +201,35 @@ public abstract class BotView {
         botView.setParentViewId(this.getParentViewId());
         botView.data = this.data.clone();
         return botView;
+    }
+
+
+    // Todo move somewhere else
+    public InlineKeyboardButton buildButton(String text, String action) {
+        return buildButton(text, action, null);
+    }
+
+    public InlineKeyboardButton buildButton(String text, String action, Storage data) {
+        if (data == null) {
+            data = new Storage();
+        }
+
+        try {
+            CallbackDataManager callbackDataManager = getContext().getBotCenterToContextBridge().getCallbackDataManager();
+
+            data.put(STORAGE_KEY_CALLBACK_ACTION, action);
+            return new InlineKeyboardButton()
+                    .setText(text)
+                    .setCallbackData(callbackDataManager.saveStorage(getContext().getTelegramUpdate(), data));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public InlineKeyboardButton buildButton(String text, URL url) {
+        return new InlineKeyboardButton()
+                .setText(text)
+                .setUrl(url.toString());
     }
 }

@@ -2,16 +2,10 @@ package com.songboxhouse.telegrambot.example;
 
 import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.view.BotView;
-import com.songboxhouse.telegrambot.context.BotContext;
+import com.songboxhouse.telegrambot.view.BotContext;
 import com.songboxhouse.telegrambot.util.Storage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static com.songboxhouse.telegrambot.util.InlineKeyboardBuilder.buildButton;
 
 public class SuperConfigureViewWithInlineButtons extends BotView {
     public static final String BUTTON_OK = "ok";
@@ -97,23 +91,27 @@ public class SuperConfigureViewWithInlineButtons extends BotView {
     }
 
     @Override
-    public void onCallbackQueryDataReceived(Update update, String data) {
-        super.onCallbackQueryDataReceived(update, data);
+    public void onCallbackQueryDataReceived(Update update, String action, Storage data) {
+        super.onCallbackQueryDataReceived(update, action, data);
 
-        if (data.equals(BUTTON_OK)) {
-            sendMessage("OK clicked for view " + describeView(), false);
-        } else if (data.equals(BUTTON_CANCEL)) {
-            sendMessage("Cancel clicked for view " + describeView(), false);
-        } else if (data.equals(BUTTON_RERUN_CONFIGURATION)) {
-            Integer level = getData().get(ARG_NESTED_LEVEL, Integer.class);
-            if (level == null) {
-                level = -2;
-            }
-            level++;
-            Storage storage = new Storage()
-                    .put(SuperConfigureViewWithInlineButtons.ARG_NESTED_LEVEL, level);
+        switch (action) {
+            case BUTTON_OK:
+                sendMessage("OK clicked for view " + describeView(), false);
+                break;
+            case BUTTON_CANCEL:
+                sendMessage("Cancel clicked for view " + describeView(), false);
+                break;
+            case BUTTON_RERUN_CONFIGURATION:
+                Integer level = getData().get(ARG_NESTED_LEVEL, Integer.class);
+                if (level == null) {
+                    level = -2;
+                }
+                level++;
+                Storage storage = new Storage()
+                        .put(SuperConfigureViewWithInlineButtons.ARG_NESTED_LEVEL, level);
 
-            navigate(SuperConfigureViewWithInlineButtons.class, storage);
+                navigate(SuperConfigureViewWithInlineButtons.class, storage);
+                break;
         }
     }
 

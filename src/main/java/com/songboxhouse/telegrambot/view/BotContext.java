@@ -1,5 +1,6 @@
-package com.songboxhouse.telegrambot.context;
+package com.songboxhouse.telegrambot.view;
 
+import com.songboxhouse.telegrambot.BotCenter;
 import com.songboxhouse.telegrambot.view.BotMessage;
 import com.songboxhouse.telegrambot.util.SessionStorage;
 import com.songboxhouse.telegrambot.util.Storage;
@@ -19,4 +20,6 @@ public abstract class BotContext {
     public abstract SessionStorage getSessionStorage();
 
     public abstract Update getTelegramUpdate();
+
+    protected abstract BotCenter.BotCenterToContextBridge getBotCenterToContextBridge();
 }
