@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static com.songboxhouse.telegrambot.CallbackDataManager.STORAGE_KEY_CALLBACK_ACTION;
-import static com.songboxhouse.telegrambot.util.ExecutorUtil.createExecutorService;
 import static com.songboxhouse.telegrambot.util.TelegramBotUtils.backButton;
 import static com.songboxhouse.telegrambot.util.TelegramBotUtils.getChatId;
 import static com.songboxhouse.telegrambot.util.TelegramBotUtils.getUid;
@@ -54,14 +53,14 @@ public class BotCenter {
         ApiContextInitializer.init(); /* Require for new Telegram bot */
         this.initialViewClass = builder.initialViewClass;
         this.telegramLongPollingBot = new TelegramLongPollingBotImpl(builder.telegramBotToken, builder.telegramBotName,
-                builder.updateReceiveListener, this);
+                builder.updateReceiveListener, builder.executorServiceManager, this);
         this.botViewManager = new BotViewManager(builder.dependecyProvider);
         this.telegramMethodManager = builder.telegramMethodManager;
         this.botViewsStorage = new BotViewsStorage(botViewManager);
         this.callbackDataManager = new CallbackDataManager(builder.callbackDataSavingEnabled, builder.maxCallbackDataCache);
         this.buttonsInRow = builder.buttonsInRow;
 
-        botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize);
+        botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize, builder.executorServiceManager);
 
         botViewsStorage.setInstanceSavingEnabled(builder.instanceSavedEnabled);
         botViewsStorage.setMaxUserViewCache(builder.maxBotViewCache);
@@ -113,14 +112,12 @@ public class BotCenter {
                     }
 
                     if (view == null) {
-                        System.out.println("Bot view is null, cannot process callback data");
-                        return;
+                        throw new IllegalStateException("Bot view is null, cannot process callback data");
                     }
 
 
                 } else {
-                    System.out.println("Cannot find BotView uuid instance for callbackdata");
-                    return;
+                    throw new IllegalStateException("Cannot find BotView uuid instance for callbackdata");
                 }
 
                 if (view.menuLinkStates() != null) {
@@ -151,6 +148,7 @@ public class BotCenter {
             onUpdateReceivedUnsafe(update);
         } catch (Exception e) {
             e.printStackTrace();
+            fallbackGoHome(update);
         }
     }
 
@@ -244,8 +242,8 @@ public class BotCenter {
     public class BotCenterToContextBridge {
         private ExecutorService executorService;
 
-        BotCenterToContextBridge(int executorServiceThreadSize) {
-            this.executorService = createExecutorService(executorServiceThreadSize);
+        BotCenterToContextBridge(int executorServiceThreadSize, ExecutorServiceManager executorServiceManager) {
+            this.executorService = executorServiceManager.createExecutorService(executorServiceThreadSize);
         }
 
         private void draw(BotView botView, Update update, boolean sendAsNewMessage) {
@@ -352,6 +350,7 @@ public class BotCenter {
         private int buttonsInRow = 2;
         private int executorServiceThreadSize = 16;
         private UpdateReceiveListener updateReceiveListener;
+        private ExecutorServiceManager executorServiceManager = new ExecutorServiceManager();
 
         public <BV extends BotView> Builder(String telegramBotName, String telegramBotToken, Class<BV> initialViewClass) {
             this.telegramBotName = telegramBotName;
@@ -401,6 +400,11 @@ public class BotCenter {
 
         public Builder setMaxCallbackDataCache(int maxCallbackDataCache) {
             this.maxCallbackDataCache = maxCallbackDataCache;
+            return this;
+        }
+
+        public Builder setExecutorServiceManager(ExecutorServiceManager executorServiceManager) {
+            this.executorServiceManager = executorServiceManager;
             return this;
         }
 

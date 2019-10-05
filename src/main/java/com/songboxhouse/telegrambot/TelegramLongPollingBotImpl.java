@@ -1,6 +1,6 @@
 package com.songboxhouse.telegrambot;
 
-import com.songboxhouse.telegrambot.util.ExecutorUtil;
+import com.songboxhouse.telegrambot.util.ExecutorServiceManager;
 import com.songboxhouse.telegrambot.util.UpdateReceiveListener;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -15,12 +15,14 @@ public class TelegramLongPollingBotImpl extends TelegramLongPollingBot {
     private UpdateReceiveListener updateReceiveListener;
 
     TelegramLongPollingBotImpl(String botToken, String botName,
-                               UpdateReceiveListener updateReceiveListener, BotCenter botCenter) {
+                               UpdateReceiveListener updateReceiveListener,
+                               ExecutorServiceManager executorServiceManager,
+                               BotCenter botCenter) {
         this.botToken = botToken;
         this.updateReceiveListener = updateReceiveListener;
         this.botCenter = botCenter;
         this.botName = botName;
-        telegramExecutorService = ExecutorUtil.createExecutorService(16);
+        telegramExecutorService = executorServiceManager.createExecutorService(16);
     }
 
     @Override
