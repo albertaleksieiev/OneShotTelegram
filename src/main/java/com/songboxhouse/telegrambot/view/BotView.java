@@ -33,7 +33,7 @@ public abstract class BotView {
     public abstract String draw(Storage data);
 
     public void onTextReceived(Message message) {
-
+        throw new IllegalStateException("You should override onTextReceived, or it will safely fallback home through exception");
     }
 
     public <BT extends BotView> Class<BT>[] menuLinkStates() {

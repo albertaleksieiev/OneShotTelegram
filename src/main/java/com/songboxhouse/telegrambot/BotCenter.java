@@ -112,14 +112,12 @@ public class BotCenter {
                     }
 
                     if (view == null) {
-                        System.out.println("Bot view is null, cannot process callback data");
-                        return;
+                        throw new IllegalStateException("Bot view is null, cannot process callback data");
                     }
 
 
                 } else {
-                    System.out.println("Cannot find BotView uuid instance for callbackdata");
-                    return;
+                    throw new IllegalStateException("Cannot find BotView uuid instance for callbackdata");
                 }
 
                 if (view.menuLinkStates() != null) {
@@ -150,6 +148,7 @@ public class BotCenter {
             onUpdateReceivedUnsafe(update);
         } catch (Exception e) {
             e.printStackTrace();
+            fallbackGoHome(update);
         }
     }
 

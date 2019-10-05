@@ -57,12 +57,6 @@ public class HomeView extends BotView {
     }
 
     @Override
-    public void onTextReceived(Message message) {
-        super.onTextReceived(message);
-        navigate(HomeView.class, true);
-    }
-
-    @Override
     public void onCallbackQueryDataReceived(Update update, String action, Storage data) {
         super.onCallbackQueryDataReceived(update, action, data);
         if (action.equals(BUTTON_KEY_RUN_SUPER_CONFIG)) {
