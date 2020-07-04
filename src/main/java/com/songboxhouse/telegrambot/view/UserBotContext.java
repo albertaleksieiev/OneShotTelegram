@@ -48,6 +48,11 @@ public class UserBotContext extends BotContext {
     }
 
     @Override
+    public String getLocale() {
+        return botCenterToContextBridge.getLocale(update);
+    }
+
+    @Override
     protected BotCenter.BotCenterToContextBridge getBotCenterToContextBridge() {
         return botCenterToContextBridge;
     }

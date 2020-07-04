@@ -76,6 +76,7 @@ public class HomeView extends BotView {
         return new Class[]{
                 SettingsView.class,
                 ConfigureTokenView.class,
+                LocalizationExampleView.class,
                 TestAuthBotView.class
         };
     }

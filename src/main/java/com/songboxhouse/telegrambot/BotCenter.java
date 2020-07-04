@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.bots.AbsSender;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -60,7 +61,7 @@ public class BotCenter {
         this.callbackDataManager = new CallbackDataManager(builder.callbackDataSavingEnabled, builder.maxCallbackDataCache);
         this.buttonsInRow = builder.buttonsInRow;
 
-        botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize, builder.executorServiceManager);
+        botCenterToContextBridge = new BotCenterToContextBridge(builder.executorServiceThreadSize, builder.executorServiceManager, builder.localizationProvider);
 
         botViewsStorage.setInstanceSavingEnabled(builder.instanceSavedEnabled);
         botViewsStorage.setMaxUserViewCache(builder.maxBotViewCache);
@@ -240,10 +241,13 @@ public class BotCenter {
     }
 
     public class BotCenterToContextBridge {
+        @Nullable
+        private final LocalizationProvider localizationProvider;
         private ExecutorService executorService;
 
-        BotCenterToContextBridge(int executorServiceThreadSize, ExecutorServiceManager executorServiceManager) {
+        BotCenterToContextBridge(int executorServiceThreadSize, ExecutorServiceManager executorServiceManager, @Nullable LocalizationProvider localizationProvider) {
             this.executorService = executorServiceManager.createExecutorService(executorServiceThreadSize);
+            this.localizationProvider = localizationProvider;
         }
 
         private void draw(BotView botView, Update update, boolean sendAsNewMessage) {
@@ -330,9 +334,27 @@ public class BotCenter {
             return callbackDataManager;
         }
 
+        @Nullable
+        public String getLocale(Update update) {
+            if (localizationProvider == null) {
+                return null;
+            }
+            return localizationProvider.getLocale(update);
+        }
+
         public UserBotContext buildContext(Update update) {
             return new UserBotContext(update, this);
         }
+
+        @Nullable
+        public LocalizationProvider getLocalization() {
+            return localizationProvider;
+        }
+    }
+
+    public interface LocalizationProvider {
+        public String getString(String locale, Integer stringId);
+        public String getLocale(Update update);
     }
 
     public static class Builder {
@@ -351,6 +373,7 @@ public class BotCenter {
         private int executorServiceThreadSize = 16;
         private UpdateReceiveListener updateReceiveListener;
         private ExecutorServiceManager executorServiceManager = new ExecutorServiceManager();
+        private LocalizationProvider localizationProvider;
 
         public <BV extends BotView> Builder(String telegramBotName, String telegramBotToken, Class<BV> initialViewClass) {
             this.telegramBotName = telegramBotName;
@@ -363,7 +386,12 @@ public class BotCenter {
             return this;
         }
 
-//        public Builder setTelegramMethodManager(Object telegramMethodManager) {
+        public Builder setLocalization(LocalizationProvider localizationProvider) {
+            this.localizationProvider = localizationProvider;
+            return this;
+        }
+
+        //        public Builder setTelegramMethodManager(Object telegramMethodManager) {
 //            this.telegramMethodManager = telegramMethodManager;
 //            return this;
 //        }
