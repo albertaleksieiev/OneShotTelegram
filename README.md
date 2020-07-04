@@ -276,3 +276,65 @@ public class HomeView extends BotView {
 By default your view and data will be saved to disk in case of restore state, restoring used in case of clicking on the button on old messages. So data needs to be serializable, but you can override `onSaveInstanceState` and `onRestoreInstanceState`.
 
 You can disable saving view to disk by `BotCenter.Builder::setInstanceSavingEnabled(false)`. 
+
+### Localization
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img5.gif)
+To use localization you have to do a few actions:
+##### 1. Create resource class
+```
+public class R {
+    public static final String LOCALE_RU = "ru";
+    public static final String LOCALE_EN = "en";
+    
+    public enum string {
+        LocalizationViewTitle("Localization Example", "Пример локализации"),
+        LocalizationViewDescription("Here you see localization, press button below to change language", "Здесь вы видите локализацию, поменяйте язык ниже.");
+
+        public final String en;
+        public final String rus;
+
+        private string(String en, String rus) {
+            this.en = en;
+            this.rus = rus;
+        }
+        public static string valueOf(int ordinal) {
+            return string.values()[ordinal];
+        }
+    }
+}
+```
+
+##### 2. Implement `BotCenter.LocalizationProvider` and pass it to `BotCenter.Builder`
+```
+builder.setLocalization(new BotCenter.LocalizationProvider() {
+    @Override
+    public String getString(String locale, Integer stringId) { // Here you return string by string ID and locale
+        R.string string = R.string.valueOf(stringId);
+        if (locale.equals(LOCALE_EN)) {
+            return string.en;
+        } else if (locale.equals(LOCALE_RU)) {
+            return string.rus;
+        }
+        
+        return null; // Catch issue here
+    }
+
+    @Override
+    public String getLocale(Update update) {
+        return db.getLocale(update); // get locale for selected update see `DBInMemory` for more detais
+    }
+})
+```
+
+##### 3. Use `getString` in your BotView
+```
+...
+@Override
+public String name() {
+    return getString(R.string.LocalizationViewTitle.ordinal()); // use enum::ordinal as ID
+}
+...
+```
+
+
+See `LocalizationExampleView.java` for more details.
