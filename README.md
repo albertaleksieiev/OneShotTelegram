@@ -4,6 +4,14 @@ TelegramBot SDK with Android-like UI view architecture
 
 ![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img1.gif)
 
+## Features
+- Customizable view with a bunch of UI methods, each telegram message has associated java class with own lifecycle.
+- Localization, easy just define a class!
+- Persistence, when server restarts or user clicks on 1year message you will receive an action to saved view.
+- Dependency injection
+- Thread local authorization, in any part of the app just call `getUser` to receive user. It can be usefull in spring app.
+- Compatible with kotlin, create any view in 5 lines of code.
+
 ### Create a view
 To create a view aka page, you just need to extends from `BotView` class
 
@@ -278,7 +286,7 @@ By default your view and data will be saved to disk in case of restore state, re
 You can disable saving view to disk by `BotCenter.Builder::setInstanceSavingEnabled(false)`. 
 
 ### Localization
-![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img5.gif)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/localization.gif)
 To use localization you have to do a few actions:
 ##### 1. Create resource class
 ```
