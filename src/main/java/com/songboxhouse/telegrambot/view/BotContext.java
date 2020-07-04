@@ -21,5 +21,7 @@ public abstract class BotContext {
 
     public abstract Update getTelegramUpdate();
 
+    public abstract String getLocale();
+
     protected abstract BotCenter.BotCenterToContextBridge getBotCenterToContextBridge();
 }

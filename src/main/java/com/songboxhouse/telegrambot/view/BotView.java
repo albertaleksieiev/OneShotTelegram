@@ -8,8 +8,10 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.songboxhouse.telegrambot.CallbackDataManager.STORAGE_KEY_CALLBACK_ACTION;
@@ -30,6 +32,7 @@ public abstract class BotView {
         this.context = context;
     }
 
+    @Nullable
     public abstract String draw(Storage data);
 
     public void onTextReceived(Message message) {
@@ -231,5 +234,22 @@ public abstract class BotView {
         return new InlineKeyboardButton()
                 .setText(text)
                 .setUrl(url.toString());
+    }
+
+    @Nullable
+    public String getString(Integer stringResId) {
+        String locale = getContext().getLocale();
+        if (locale == null) {
+            System.out.println("Locale is null, return");
+            return null;
+        }
+        BotCenter.LocalizationProvider localization = getContext().getBotCenterToContextBridge().getLocalization();
+        if (localization == null) {
+            System.out.println("Localization is null, return");
+            return null;
+        }
+
+
+        return localization.getString(locale, stringResId);
     }
 }

@@ -2,7 +2,15 @@
 
 TelegramBot SDK with Android-like UI view architecture
 
-![](https://api.monosnap.com/rpc/file/download?id=g1mM6h5M0Oe9eyzypNfEYpYewKhAbg&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img1.gif)
+
+## Features
+- 🖌 Customizable view with a bunch of UI methods, each telegram message has associated java class with own lifecycle.
+- 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Localization, easy just define a class!
+- 💾 Persistence, when server restarts or user clicks on 1year message you will receive an action to saved view.
+- 💉 Dependency injection, receive in your view all of your dependencies!
+- 🔑 Thread local authorization, in any part of the app just call `getUser` to receive user. It can be usefull in spring app.
+- ✨ Compatible with kotlin, create any view in 5 lines of code.
 
 ### Create a view
 To create a view aka page, you just need to extends from `BotView` class
@@ -22,7 +30,7 @@ public class HomeView extends BotView {
     }
 }
 ```
-![](https://api.monosnap.com/rpc/file/download?id=ZzBkVI83fjoy2EHwBSeynwlxptCkWF&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img2.png)
 
 ### Start Bot
 To register and start bot you need use `BotCenter`
@@ -118,7 +126,7 @@ public class HomeView extends BotView {
 }
 ```
 
-![](https://api.monosnap.com/rpc/file/download?id=AJ65AGRHLWJwbZsUn1mJrdHp0gQnQf&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img3.gif)
 
 ### Navigate to other view with arguments
 
@@ -270,9 +278,71 @@ public class HomeView extends BotView {
 }
 ```
 
-![](https://api.monosnap.com/rpc/file/download?id=yQ5VyVEfIhcoMPHRk1jI88tR6ZkLbi&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img4.gif)
 
 ### Persistence `BotView` instance
 By default your view and data will be saved to disk in case of restore state, restoring used in case of clicking on the button on old messages. So data needs to be serializable, but you can override `onSaveInstanceState` and `onRestoreInstanceState`.
 
 You can disable saving view to disk by `BotCenter.Builder::setInstanceSavingEnabled(false)`. 
+
+### Localization
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/localization.gif)
+To use localization you have to do a few actions:
+##### 1. Create resource class
+```
+public class R {
+    public static final String LOCALE_RU = "ru";
+    public static final String LOCALE_EN = "en";
+    
+    public enum string {
+        LocalizationViewTitle("Localization Example", "Пример локализации"),
+        LocalizationViewDescription("Here you see localization, press button below to change language", "Здесь вы видите локализацию, поменяйте язык ниже.");
+
+        public final String en;
+        public final String rus;
+
+        private string(String en, String rus) {
+            this.en = en;
+            this.rus = rus;
+        }
+        public static string valueOf(int ordinal) {
+            return string.values()[ordinal];
+        }
+    }
+}
+```
+
+##### 2. Implement `BotCenter.LocalizationProvider` and pass it to `BotCenter.Builder`
+```
+builder.setLocalization(new BotCenter.LocalizationProvider() {
+    @Override
+    public String getString(String locale, Integer stringId) { // Here you return string by string ID and locale
+        R.string string = R.string.valueOf(stringId);
+        if (locale.equals(LOCALE_EN)) {
+            return string.en;
+        } else if (locale.equals(LOCALE_RU)) {
+            return string.rus;
+        }
+        
+        return null; // Catch issue here
+    }
+
+    @Override
+    public String getLocale(Update update) {
+        return db.getLocale(update); // get locale for selected update see `DBInMemory` for more detais
+    }
+})
+```
+
+##### 3. Use `getString` in your BotView
+```
+...
+@Override
+public String name() {
+    return getString(R.string.LocalizationViewTitle.ordinal()); // use enum::ordinal as ID
+}
+...
+```
+
+
+See `LocalizationExampleView.java` for more details.
