@@ -2,7 +2,7 @@
 
 TelegramBot SDK with Android-like UI view architecture
 
-![](https://api.monosnap.com/rpc/file/download?id=g1mM6h5M0Oe9eyzypNfEYpYewKhAbg&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img1.gif)
 
 ### Create a view
 To create a view aka page, you just need to extends from `BotView` class
@@ -22,7 +22,7 @@ public class HomeView extends BotView {
     }
 }
 ```
-![](https://api.monosnap.com/rpc/file/download?id=ZzBkVI83fjoy2EHwBSeynwlxptCkWF&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img2.png)
 
 ### Start Bot
 To register and start bot you need use `BotCenter`
@@ -118,7 +118,7 @@ public class HomeView extends BotView {
 }
 ```
 
-![](https://api.monosnap.com/rpc/file/download?id=AJ65AGRHLWJwbZsUn1mJrdHp0gQnQf&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img3.gif)
 
 ### Navigate to other view with arguments
 
@@ -270,7 +270,7 @@ public class HomeView extends BotView {
 }
 ```
 
-![](https://api.monosnap.com/rpc/file/download?id=yQ5VyVEfIhcoMPHRk1jI88tR6ZkLbi&type=attachment)
+![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/img4.gif)
 
 ### Persistence `BotView` instance
 By default your view and data will be saved to disk in case of restore state, restoring used in case of clicking on the button on old messages. So data needs to be serializable, but you can override `onSaveInstanceState` and `onRestoreInstanceState`.
