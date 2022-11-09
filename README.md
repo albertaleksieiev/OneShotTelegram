@@ -286,7 +286,7 @@ By default your view and data will be saved to disk in case of restore state, re
 You can disable saving view to disk by `BotCenter.Builder::setInstanceSavingEnabled(false)`. 
 
 ### Localization
-![](https://github.com/albertaleksieiev/OneShotTelegram/raw/localization/docs/localization.gif)
+
 To use localization you have to do a few actions:
 ##### 1. Create resource class
 ```
